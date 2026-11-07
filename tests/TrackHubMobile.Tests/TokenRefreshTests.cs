@@ -86,11 +86,11 @@ public class TokenRefreshTests
     public void StopListening() => WeakReferenceMessenger.Default.Unregister<SignInRequiredMessage>(recipient);
 
     [Test]
-    public void ABlipWhileRefreshingAfterA401_IsARetryableError_NotASignInPrompt()
+    public async Task ABlipWhileRefreshingAfterA401_IsARetryableError_NotASignInPrompt()
     {
         var reader = ReaderAnswering401(TokenRefreshResult.Unavailable, out var storage);
 
-        Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
             reader.ExecuteGraphQLQueryWithErrors<IEnumerable<PositionVm>>(Constants.RouterUrl, "query { x }", "x", CancellationToken.None));
         Assert.Multiple(() =>
         {
