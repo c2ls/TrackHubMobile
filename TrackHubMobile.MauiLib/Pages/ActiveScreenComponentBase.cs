@@ -24,9 +24,11 @@ namespace TrackHubMobile.Pages
 
         protected NavigationManager Navigation { get; } = navigation;
         private bool _isCurrentScreen = false;
+        private string _path = string.Empty;
 
         protected override void OnInitialized()
         {
+            _path = new Uri(Navigation.Uri).AbsolutePath;
             Navigation.LocationChanged += HandleLocationChanged;
         }
 
@@ -41,7 +43,9 @@ namespace TrackHubMobile.Pages
 
         private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
         {
-            if (_isCurrentScreen)
+            // A query-only change (or re-selecting the current tab) keeps this component mounted,
+            // so nothing would ever mark the screen active again.
+            if (_isCurrentScreen && new Uri(e.Location).AbsolutePath != _path)
             {
                 _isCurrentScreen = false;
                 refresh.SetScreenActive(false);

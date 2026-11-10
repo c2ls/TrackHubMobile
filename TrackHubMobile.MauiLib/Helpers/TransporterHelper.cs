@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 //
 
 using TrackHubMobile.Interfaces.Helpers;
+using TrackHubMobile.Models;
 
 namespace TrackHubMobile.Helpers;
 
@@ -63,4 +64,17 @@ public class TransporterHelper(ILocalizationResourceManager localization) : ITra
         
         return accStatus.Value ? localization["AccOn"] : localization["AccOff"];
     }
+
+    public string GetStatusName(UnitDisplayStatus status)
+        => localization[status == UnitDisplayStatus.Moving ? "InMovement" : status.ToString()];
+
+    public string GetFilterName(UnitFilter filter) => filter switch
+    {
+        UnitFilter.All => localization["All"],
+        UnitFilter.Moving => localization["InMovement"],
+        _ => localization[filter.ToString()]
+    };
+
+    public string GetLocation(PositionVm unit)
+        => string.Join(", ", new[] { unit.Address, unit.City }.Where(part => !string.IsNullOrWhiteSpace(part)));
 }

@@ -5,86 +5,96 @@
 @inject ITransporterHelper transporterHelper
 
 <div class="dashboard-page">
-    <h1 class="page-title">@LRM["Dashboard"]</h1>
-
-    <div class="hero-card" @onclick="NavigateToMapView">
-        <div class="hero-left">
-            <span class="hero-value">@ViewModel.Total</span>
-            <span class="hero-label">@LRM["TotalUnits"]</span>
-        </div>
-        <div class="hero-right">
-            <img class="hero-icon" src="images/logo-th.svg" alt="" />
-        </div>
+    <div class="page-head">
+        <h1 class="page-title">@LRM["Dashboard"]</h1>
+        @if (ViewModel.LastGlobalUpdate.HasValue)
+        {
+            <span class="page-sub">@LRM["LastGlobalUpdate"]: @transporterHelper.GetTimeDifference(ViewModel.LastGlobalUpdate.Value)</span>
+        }
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card moving" @onclick="NavigateToListView">
-            <div class="stat-icon-wrap">
-                <i class="fas fa-route"></i>
-            </div>
-            <span class="stat-value">@ViewModel.InMovement</span>
-            <span class="stat-label">@LRM["InMovement"]</span>
-        </div>
-        <div class="stat-card stopped" @onclick="NavigateToListView">
-            <div class="stat-icon-wrap">
-                <i class="fas fa-parking"></i>
-            </div>
-            <span class="stat-value">@ViewModel.Stopped</span>
-            <span class="stat-label">@LRM["Stopped"]</span>
-        </div>
-        <div class="stat-card offline" @onclick="NavigateToListView">
-            <div class="stat-icon-wrap">
-                <i class="fas fa-wifi-slash fa-signal"></i>
-            </div>
-            <span class="stat-value">@ViewModel.Offline</span>
-            <span class="stat-label">@LRM["Offline"]</span>
-        </div>
-        <div class="stat-card speeding" @onclick="NavigateToListView">
-            <div class="stat-icon-wrap">
-                <i class="fas fa-tachometer-alt"></i>
-            </div>
-            <span class="stat-value">@ViewModel.Speeding</span>
-            <span class="stat-label">@LRM["Speeding"]</span>
-        </div>
-    </div>
-
-    <div class="metrics-row">
-        <div class="metric-card">
-            <div class="metric-icon ignition-icon">
-                <i class="fas fa-key"></i>
-            </div>
-            <div class="metric-body">
-                <span class="metric-value">@ViewModel.IgnitionOn</span>
-                <span class="metric-label">@LRM["IgnitionOn"]</span>
-            </div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-icon speed-icon">
-                <i class="fas fa-gauge-high"></i>
-            </div>
-            <div class="metric-body">
-                <span class="metric-value">@ViewModel.AverageSpeed <small>km/h</small></span>
-                <span class="metric-label">@LRM["AvgSpeed"]</span>
-            </div>
-        </div>
-    </div>
-
-    @if (ViewModel.LastGlobalUpdate.HasValue)
+    @if (!ViewModel.IsLoaded)
     {
-        <div class="last-update-bar">
-            <i class="fas fa-clock"></i>
-            <span>@LRM["LastGlobalUpdate"]: @transporterHelper.GetTimeDifference(ViewModel.LastGlobalUpdate.Value)</span>
-        </div>
+        <div class="skeleton" style="height: 17rem"></div>
+        <div class="skeleton" style="height: 9rem"></div>
     }
+    else
+    {
+        <section class="fleet-card">
+            <button class="fleet-total" @onclick="OpenMap">
+                <span class="fleet-value">@ViewModel.Total</span>
+                <span class="fleet-meta">
+                    <strong>@LRM["TotalUnits"]</strong>
+                    <span>@ViewModel.IgnitionOn @LRM["IgnitionOn"] · @LRM["AvgSpeed"] @ViewModel.AverageSpeed km/h</span>
+                </span>
+                <i class="fas fa-map-marked-alt"></i>
+            </button>
 
-    <div class="nav-buttons">
-        <button class="btn btn-nav" @onclick="NavigateToListView">
-            <i class="fas fa-list-ul"></i>
-            <span>@LRM["ListView"]</span>
-        </button>
-        <button class="btn btn-nav" @onclick="NavigateToMapView">
-            <i class="fas fa-map-marked-alt"></i>
-            <span>@LRM["MapView"]</span>
-        </button>
-    </div>
+            @if (ViewModel.Total > 0)
+            {
+                <div class="fleet-bar">
+                    @foreach (var (css, count) in new[]
+                    {
+                        ("st-moving", ViewModel.InMovement - ViewModel.Speeding),
+                        ("st-speeding", ViewModel.Speeding),
+                        ("st-stopped", ViewModel.Stopped),
+                        ("st-offline", ViewModel.Offline)
+                    })
+                    {
+                        if (count > 0)
+                        {
+                            <span class="@css" style="flex-grow: @count"></span>
+                        }
+                    }
+                </div>
+            }
+
+            <button class="status-row st-moving" @onclick="() => OpenList(UnitFilter.Moving)">
+                <span class="status-dot"></span>
+                <span class="status-name">@LRM["InMovement"]</span>
+                <span class="status-count">@ViewModel.InMovement</span>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="status-row st-stopped" @onclick="() => OpenList(UnitFilter.Stopped)">
+                <span class="status-dot"></span>
+                <span class="status-name">@LRM["Stopped"]</span>
+                <span class="status-count">@ViewModel.Stopped</span>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="status-row st-offline" @onclick="() => OpenList(UnitFilter.Offline)">
+                <span class="status-dot"></span>
+                <span class="status-name">@LRM["Offline"]</span>
+                <span class="status-count">@ViewModel.Offline</span>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="status-row st-speeding" @onclick="() => OpenList(UnitFilter.Speeding)">
+                <span class="status-dot"></span>
+                <span class="status-name">@LRM["Speeding"]</span>
+                <span class="status-count">@ViewModel.Speeding</span>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </section>
+
+        @if (ViewModel.Attention.Count > 0)
+        {
+            <h2 class="section-label">@LRM["NeedsAttention"]</h2>
+            <section class="attention-card">
+                @foreach (var unit in ViewModel.Attention)
+                {
+                    var status = ViewModel.StatusRules.DisplayStatusOf(unit, DateTimeOffset.UtcNow);
+                    <button @key="unit.TransporterId" class="attention-row" @onclick="() => OpenUnit(unit.TransporterId)">
+                        <span class="attention-body">
+                            <span class="attention-name">@unit.DeviceName</span>
+                            <span class="attention-detail">
+                                @(status == UnitDisplayStatus.Speeding
+                                    ? $"{unit.Speed:N0} km/h"
+                                    : transporterHelper.GetTimeDifference(unit.DeviceDateTime))
+                            </span>
+                        </span>
+                        <span class="status-pill @status.CssClass()">@transporterHelper.GetStatusName(status)</span>
+                    </button>
+                }
+            </section>
+        }
+    }
 </div>

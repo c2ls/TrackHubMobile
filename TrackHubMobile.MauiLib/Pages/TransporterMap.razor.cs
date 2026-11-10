@@ -19,11 +19,18 @@ using TrackHubMobile.Interfaces.Helpers;
 using TrackHubMobile.Interfaces.Services;
 using TrackHubMobile.Messages;
 using TrackHubMobile.Models;
+using TrackHubMobile.Utils;
 
 namespace TrackHubMobile.Pages;
 
 public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
 {
+    // Clears the search field and filter chips floating over the top of the map.
+    private const int TopOverlayPixels = 130;
+
+    // Keeps a tapped marker from ending up underneath the unit sheet.
+    private const int UnitSheetPixels = 210;
+
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private TransporterMapViewModel ViewModel { get; set; } = default!;
     [Inject] private ITransporterHelper TransporterHelper { get; set; } = default!;
@@ -31,13 +38,19 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
     [SupplyParameterFromQuery(Name = "transporterId")]
     public string? TransporterIdParam { get; set; }
 
+    private DotNetObjectReference<TransporterMap>? selfReference;
     private bool isLoading = true;
     private bool mapInitialized;
+    private string searchText = string.Empty;
+    private UnitFilter filter;
+    private Guid? selectedId;
 
     public TransporterMap(IDataRefresh refresh, NavigationManager navigationManager)
         : base(refresh, navigationManager)
     {
     }
+
+    private PositionVm? Selected => selectedId is { } id ? ViewModel.Find(id) : null;
 
     protected override void OnInitialized()
     {
@@ -53,7 +66,10 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         {
             try
             {
-                await JS.InvokeVoidAsync("trackHubMap.initMap", Array.Empty<object>(), BuildMapLabels());
+                selfReference = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("trackHubMap.initMap",
+                    Array.Empty<object>(),
+                    new { dotNetRef = selfReference, topInset = TopOverlayPixels, bottomInset = UnitSheetPixels });
                 mapInitialized = true;
                 await LoadInitialDataAsync();
             }
@@ -64,77 +80,88 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         }
     }
 
-    // Localized strings for the popups map.js builds on its own
-    private object BuildMapLabels() => new
-    {
-        moving = LRM["InMovement"],
-        stopped = LRM["Stopped"],
-        offline = LRM["Offline"],
-        justNow = LRM["JustNow"],
-        minutesAgo = LRM["MinutesAgo"],
-        hoursAgo = LRM["HoursAgo"],
-        daysAgo = LRM["DaysAgo"],
-        accOn = LRM["AccOn"],
-        accOff = LRM["AccOff"]
-    };
-
     private async Task LoadInitialDataAsync()
     {
-        isLoading = true;
-        StateHasChanged();
-
-        await ViewModel.LoadDataAsync();
-
-        if (ViewModel.Transporters is not null)
-        {
-            if (!string.IsNullOrEmpty(TransporterIdParam) &&
-                Guid.TryParse(TransporterIdParam, out var tid))
-            {
-                await FocusOnSingleUnit(tid, preserveView: false);
-            }
-            else
-            {
-                await UpdateMapMarkers(ViewModel.Transporters, fitView: true);
-            }
-        }
-
-        isLoading = false;
-        StateHasChanged();
-    }
-
-    private async Task FocusOnSingleUnit(Guid transporterId, bool preserveView)
-    {
-        if (!mapInitialized) return;
-
-        if (ViewModel.Find(transporterId) is { } unit)
-        {
-            try
-            {
-                await JS.InvokeVoidAsync("trackHubMap.focusSingleUnit", MapPositionToJs(unit), preserveView);
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or OperationCanceledException)
-            {
-            }
-        }
-        else if (!preserveView && ViewModel.Transporters is not null)
-        {
-            await UpdateMapMarkers(ViewModel.Transporters, fitView: true);
-        }
-    }
-
-    private async Task UpdateMapMarkers(IEnumerable<PositionVm> transporters, bool fitView)
-    {
-        if (!mapInitialized) return;
-
         try
         {
-            var jsPositions = transporters.Select(MapPositionToJs).ToArray();
-            await JS.InvokeVoidAsync("trackHubMap.updateMarkers", (object)jsPositions, fitView);
+            await ViewModel.LoadDataAsync();
+
+            var focused = Guid.TryParse(TransporterIdParam, out var transporterId) && ViewModel.Find(transporterId) is not null;
+            await UpdateMapMarkersAsync(fitView: !focused);
+            if (focused)
+            {
+                await SelectAsync(transporterId, center: true);
+            }
         }
-        catch
+        finally
         {
-            // JS interop can fail during navigation
+            isLoading = false;
+            StateHasChanged();
         }
+    }
+
+    private IEnumerable<PositionVm> VisibleUnits()
+    {
+        var now = DateTimeOffset.UtcNow;
+        return (ViewModel.Transporters ?? []).Where(t =>
+            filter.Matches(ViewModel.StatusRules.DisplayStatusOf(t, now))
+            && (string.IsNullOrWhiteSpace(searchText) || t.DeviceName.Contains(searchText, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private async Task UpdateMapMarkersAsync(bool fitView)
+    {
+        var markers = VisibleUnits().Select(t => MapMarker.From(t, ViewModel.StatusRules)).ToArray();
+        await InvokeMapAsync("trackHubMap.updateMarkers", markers, fitView);
+    }
+
+    private async Task SelectAsync(Guid? transporterId, bool center)
+    {
+        selectedId = transporterId;
+        await InvokeMapAsync("trackHubMap.selectUnit", transporterId?.ToString(), center);
+    }
+
+    [JSInvokable]
+    public async Task OnMarkerSelected(string transporterId)
+    {
+        if (Guid.TryParse(transporterId, out var id))
+        {
+            await SelectAsync(id, center: false);
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnMapTapped()
+    {
+        await DeselectAsync();
+        StateHasChanged();
+    }
+
+    private Task DeselectAsync() => SelectAsync(null, center: false);
+
+    private Task CenterOnSelectedAsync() => SelectAsync(selectedId, center: true);
+
+    private Task FitFleetAsync() => UpdateMapMarkersAsync(fitView: true);
+
+    private async Task OnSearchInputAsync(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        await ApplyFiltersAsync();
+    }
+
+    private async Task SetFilterAsync(UnitFilter value)
+    {
+        filter = value;
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        if (selectedId is { } id && VisibleUnits().All(t => t.TransporterId != id))
+        {
+            await DeselectAsync();
+        }
+        await UpdateMapMarkersAsync(fitView: true);
     }
 
     private void HandleRefreshMessage(object recipient, DataRefreshedMessage message)
@@ -142,40 +169,25 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         MainThread.BeginInvokeOnMainThread(async () =>
         {
             ViewModel.UpdateFromRefresh(message.Value, message.Rules);
-            if (string.IsNullOrEmpty(TransporterIdParam))
-            {
-                // Keep the user's pan/zoom on periodic refreshes
-                await UpdateMapMarkers(message.Value, fitView: false);
-            }
-            else if (Guid.TryParse(TransporterIdParam, out var tid))
-            {
-                // Single-unit focus keeps tracking the unit as it moves
-                await FocusOnSingleUnit(tid, preserveView: true);
-            }
+            // Keep the user's pan/zoom on periodic refreshes
+            await UpdateMapMarkersAsync(fitView: false);
+            StateHasChanged();
         });
     }
 
-    private object MapPositionToJs(PositionVm p) => new
+    private async Task InvokeMapAsync(string identifier, params object?[] args)
     {
-        lat = p.Latitude,
-        lng = p.Longitude,
-        name = p.DeviceName,
-        speed = p.Speed,
-        dateTime = p.DeviceDateTime.ToString("o"),
-        status = ViewModel.StatusRules.StatusOf(p, DateTimeOffset.UtcNow) switch
+        if (!mapInitialized) return;
+
+        try
         {
-            UnitStatus.Offline => "offline",
-            UnitStatus.Moving => "moving",
-            _ => "stopped"
-        },
-        transporterType = TransporterHelper.GetTransporterTypeName(p.TransporterType),
-        course = p.Course ?? 0,
-        address = p.Address ?? "",
-        city = p.City ?? "",
-        state = p.State ?? "",
-        ignition = p.Attributes?.Ignition,
-        transporterId = p.TransporterId.ToString()
-    };
+            await JS.InvokeVoidAsync(identifier, args);
+        }
+        catch
+        {
+            // JS interop can fail during navigation
+        }
+    }
 
     public new void Dispose()
     {
@@ -188,6 +200,7 @@ public partial class TransporterMap : ActiveScreenComponentBase, IDisposable
         {
             // Dispose should not throw
         }
+        selfReference?.Dispose();
         base.Dispose();
     }
 }

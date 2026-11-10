@@ -13,16 +13,36 @@
 //  limitations under the License.
 //
 
+using Microsoft.AspNetCore.Components.Routing;
+
 namespace TrackHubMobile.Shared;
 
-public partial class NavMenu(NavMenuViewModel viewModel)
+public partial class NavMenu
 {
-    private NavMenuViewModel ViewModel { get; set; } = viewModel;
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private void ToggleNavMenu()
+    protected override void OnInitialized()
     {
-        collapseNavMenu = !collapseNavMenu;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    private string ActiveClass(string section) => section == CurrentSection ? "active" : string.Empty;
+
+    private string CurrentSection
+    {
+        get
+        {
+            var path = Navigation.ToBaseRelativePath(Navigation.Uri);
+            if (path.StartsWith("mapview", StringComparison.OrdinalIgnoreCase)) return "map";
+            if (path.StartsWith("listview", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("transporter", StringComparison.OrdinalIgnoreCase)) return "units";
+            if (path.StartsWith("about", StringComparison.OrdinalIgnoreCase)) return "account";
+            return "home";
+        }
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= HandleLocationChanged;
     }
 }

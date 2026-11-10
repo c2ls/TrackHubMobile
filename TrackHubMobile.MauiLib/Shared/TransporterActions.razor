@@ -1,22 +1,28 @@
-﻿@inject ITransporterHelper transporterHelper
-
-<div class="action-buttons">
-    <button class="btn btn-sm btn-outline-primary" @onclick="OpenInGoogleMaps" title="@LRM["OpenInGoogleMaps"]">
-        <i class="fas fa-map-marker-alt"></i> @LRM["OpenInGoogleMaps"]
-    </button>
-    <button class="btn btn-sm btn-outline-secondary" @onclick="ShowOnMap" title="@LRM["ShowOnMap"]">
-        <i class="fas fa-map"></i> @LRM["ShowOnMap"]
-    </button>
-    <button class="btn btn-sm btn-outline-success" @onclick="ShareViaWhatsApp" title="@LRM["ShareLocation"]">
-        <i class="fab fa-whatsapp"></i> @LRM["ShareLocation"]
-    </button>
-    <button class="btn btn-sm btn-outline-primary" @onclick="ViewHistory" title="@LRM["History"]">
-        <i class="fas fa-history"></i> @LRM["History"]
-    </button>
+﻿<div class="unit-actions">
     @if (ShowDetailsButton)
     {
-        <button class="btn btn-sm btn-outline-info" @onclick="ViewDetails" title="@LRM["ViewDetails"]">
-            <i class="fas fa-info-circle"></i> @LRM["ViewDetails"]
+        <button class="unit-action" @onclick="ViewDetails">
+            <span class="action-icon"><i class="fas fa-info"></i></span>
+            <span class="action-label">@LRM["ViewDetails"]</span>
         </button>
     }
+    <button class="unit-action" @onclick="ViewHistory">
+        <span class="action-icon"><i class="fas fa-history"></i></span>
+        <span class="action-label">@LRM["History"]</span>
+    </button>
+    @if (!ShowDetailsButton)
+    {
+        <button class="unit-action" @onclick="ShowOnMap">
+            <span class="action-icon"><i class="fas fa-map-marked-alt"></i></span>
+            <span class="action-label">@LRM["LiveMap"]</span>
+        </button>
+    }
+    <button class="unit-action" @onclick="OpenInGoogleMaps">
+        <span class="action-icon"><i class="fas fa-location-arrow"></i></span>
+        <span class="action-label">@LRM["OpenInGoogleMaps"]</span>
+    </button>
+    <button class="unit-action" @onclick="ShareViaWhatsApp">
+        <span class="action-icon"><i class="fab fa-whatsapp"></i></span>
+        <span class="action-label">@LRM["ShareLocation"]</span>
+    </button>
 </div>

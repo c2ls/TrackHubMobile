@@ -15,6 +15,7 @@
 
 using Microsoft.AspNetCore.Components;
 using TrackHubMobile.Interfaces.Services;
+using TrackHubMobile.Models;
 
 namespace TrackHubMobile.Pages;
 
@@ -23,17 +24,11 @@ public partial class Home(
     NavigationManager navigationManager) : ActiveScreenComponentBase(refresh, navigationManager)
 {
 
-    private void NavigateToListView()
-    {
-        // Replace with actual navigation logic
-        Navigation.NavigateTo("/listview");
-    }
+    private void OpenList(UnitFilter filter) => Navigation.NavigateTo($"/listview?status={filter}");
 
-    private void NavigateToMapView()
-    {
-        // Replace with actual navigation logic
-        Navigation.NavigateTo("/mapview");
-    }
+    private void OpenMap() => Navigation.NavigateTo("/mapview");
+
+    private void OpenUnit(Guid transporterId) => Navigation.NavigateTo($"/transporter/{transporterId}");
 
     protected override void OnInitialized()
     {

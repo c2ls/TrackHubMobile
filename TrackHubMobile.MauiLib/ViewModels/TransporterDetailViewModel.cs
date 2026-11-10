@@ -23,20 +23,20 @@ public partial class TransporterDetailViewModel(IRouter router, IDataRefresh dat
     [ObservableProperty]
     private PositionVm? transporter;
     [ObservableProperty]
-    private bool isRefreshing;
-    [ObservableProperty]
     private bool hasError;
 
-    public async Task OnTransporterSelected(Guid transporterId)
+    public UnitStatusRules StatusRules => dataRefresh.StatusRules;
+
+    public async Task LoadAsync(Guid transporterId)
     {
         HasError = false;
-        IsRefreshing = true;
 
-        // Show cached basic data immediately while full details load
-        var cached = dataRefresh.Transporters.FirstOrDefault(t => t.TransporterId == transporterId);
-        if (cached.TransporterId != Guid.Empty)
+        // The view model outlives the page: drop the previous unit, and show the fleet's
+        // cached position while the full details load.
+        if (Transporter?.TransporterId != transporterId)
         {
-            Transporter = cached;
+            var cached = dataRefresh.Transporters.FirstOrDefault(t => t.TransporterId == transporterId);
+            Transporter = cached.TransporterId != Guid.Empty ? cached : null;
         }
 
         try
@@ -46,19 +46,12 @@ public partial class TransporterDetailViewModel(IRouter router, IDataRefresh dat
             {
                 Transporter = result;
             }
-            // If API returned default but we have cached data, keep showing it
         }
         catch
         {
-            // API failed — keep showing cached data if available
-            if (Transporter is null)
-            {
-                HasError = true;
-            }
         }
-        finally
-        {
-            IsRefreshing = false;
-        }
+
+        // A failed or empty answer keeps whatever is already on screen
+        HasError = Transporter is null;
     }
 }

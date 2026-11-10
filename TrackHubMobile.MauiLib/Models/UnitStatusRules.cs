@@ -22,6 +22,40 @@ public enum UnitStatus
     Offline
 }
 
+public enum UnitDisplayStatus
+{
+    Speeding,
+    Moving,
+    Stopped,
+    Offline
+}
+
+public enum UnitFilter
+{
+    All,
+    Moving,
+    Stopped,
+    Offline,
+    Speeding
+}
+
+public static class UnitDisplayStatusExtensions
+{
+    public static string CssClass(this UnitDisplayStatus status) => "st-" + status.ToString().ToLowerInvariant();
+
+    public static string CssClass(this UnitFilter filter)
+        => filter == UnitFilter.All ? string.Empty : "st-" + filter.ToString().ToLowerInvariant();
+
+    public static bool Matches(this UnitFilter filter, UnitDisplayStatus status) => filter switch
+    {
+        UnitFilter.All => true,
+        UnitFilter.Moving => status is UnitDisplayStatus.Moving or UnitDisplayStatus.Speeding,
+        UnitFilter.Stopped => status == UnitDisplayStatus.Stopped,
+        UnitFilter.Offline => status == UnitDisplayStatus.Offline,
+        _ => status == UnitDisplayStatus.Speeding
+    };
+}
+
 // The account's onlineInterval is in minutes, read exactly as the portal reads it.
 public sealed record UnitStatusRules(TimeSpan OnlineWindow)
 {
@@ -43,4 +77,11 @@ public sealed record UnitStatusRules(TimeSpan OnlineWindow)
         => !IsOnline(unit, now) ? UnitStatus.Offline
             : unit.Speed > 0 ? UnitStatus.Moving
             : UnitStatus.Stopped;
+
+    public UnitDisplayStatus DisplayStatusOf(PositionVm unit, DateTimeOffset now) => StatusOf(unit, now) switch
+    {
+        UnitStatus.Offline => UnitDisplayStatus.Offline,
+        UnitStatus.Moving => IsSpeeding(unit) ? UnitDisplayStatus.Speeding : UnitDisplayStatus.Moving,
+        _ => UnitDisplayStatus.Stopped
+    };
 }
