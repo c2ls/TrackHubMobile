@@ -181,6 +181,22 @@ public class DataRefreshSchedulingTests
         }
     }
 
+    [Test]
+    public void TheFirstTickAfterAScreenChange_WaitsOutAFleetReadThatIsStillCurrent()
+    {
+        var interval = TimeSpan.FromSeconds(30);
+        var restart = TimeSpan.FromMilliseconds(500);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(DataRefresh.FirstTickDelay(null, interval, true), Is.EqualTo(TimeSpan.Zero), "nothing read yet");
+            Assert.That(DataRefresh.FirstTickDelay(TimeSpan.FromSeconds(10), interval, true), Is.EqualTo(TimeSpan.FromSeconds(20)));
+            Assert.That(DataRefresh.FirstTickDelay(TimeSpan.FromSeconds(45), interval, true), Is.EqualTo(restart), "stale data refreshes at once");
+            Assert.That(DataRefresh.FirstTickDelay(TimeSpan.FromSeconds(10), interval, false), Is.EqualTo(restart),
+                "with auto-refresh off, opening a screen is the only refresh there is");
+        });
+    }
+
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));

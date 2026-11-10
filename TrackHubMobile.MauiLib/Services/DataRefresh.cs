@@ -65,6 +65,9 @@ public class DataRefresh(
     private int _accountStatusFetchStarted;
     private volatile bool _accountOperational = true;
 
+    // UTC ticks of the last fleet read that was published; 0 until there is one.
+    private long _lastFleetReadTicks;
+
     public IEnumerable<PositionVm> Transporters { get; private set; } = [];
 
     public UnitStatusRules StatusRules { get; private set; } = UnitStatusRules.Default;
@@ -115,7 +118,7 @@ public class DataRefresh(
                     _cancellationTokenSource = new CancellationTokenSource();
                     // Use a short delay instead of TimeSpan.Zero to avoid
                     // racing with a still-running OnTick from the previous timer
-                    var startDelay = Transporters.Any() ? RestartDelay : TimeSpan.Zero;
+                    var startDelay = StartDelay();
                     // When auto-refresh is disabled by account settings we still
                     // fire once to load the initial snapshot, but never repeat.
                     var period = _refreshEnabled ? _refreshInterval : Timeout.InfiniteTimeSpan;
@@ -127,6 +130,27 @@ public class DataRefresh(
                 StopTimer();
             }
         }
+    }
+
+    // Every screen change restarts the timer. A fleet read within the current interval is still
+    // current, so the first tick waits out the remainder instead of spending one of the Router's
+    // per-minute requests on each navigation.
+    private TimeSpan StartDelay()
+    {
+        var readTicks = Volatile.Read(ref _lastFleetReadTicks);
+        return FirstTickDelay(
+            readTicks == 0 ? null : TimeSpan.FromTicks(_time.GetUtcNow().UtcTicks - readTicks),
+            _refreshInterval,
+            _refreshEnabled);
+    }
+
+    public static TimeSpan FirstTickDelay(TimeSpan? sinceLastRead, TimeSpan interval, bool refreshEnabled)
+    {
+        if (sinceLastRead is not { } elapsed) return TimeSpan.Zero;
+        if (!refreshEnabled) return RestartDelay;
+
+        var remaining = interval - elapsed;
+        return remaining > RestartDelay ? remaining : RestartDelay;
     }
 
     private void StopTimer()
@@ -223,6 +247,7 @@ public class DataRefresh(
             _session = new CancellationTokenSource();
 
             Transporters = [];
+            Volatile.Write(ref _lastFleetReadTicks, 0);
             StatusRules = UnitStatusRules.Default;
             manager.ResetSession();
             Interlocked.Exchange(ref _settingsFetchStarted, 0);
@@ -232,6 +257,7 @@ public class DataRefresh(
             _accountOperational = true;
             ApplyAccountSettings(true, (int)DefaultRefreshInterval.TotalSeconds);
             WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(Transporters, StatusRules));
+            WeakReferenceMessenger.Default.Send(new SessionResetMessage());
             WeakReferenceMessenger.Default.Send(new AccountSuspendedMessage(false));
         }
     }
@@ -393,7 +419,7 @@ public class DataRefresh(
             // An empty fleet is a valid result and must reach the screens
             var units = result.Data?.ToList() ?? [];
             UnitStatusRules rules = UnitStatusRules.Default;
-            if (PublishIfCurrent(session, () => { Transporters = units; rules = StatusRules; }))
+            if (PublishIfCurrent(session, () => { Transporters = units; rules = StatusRules; Volatile.Write(ref _lastFleetReadTicks, _time.GetUtcNow().UtcTicks); }))
             {
                 PostToMainThreadIfCurrent(session, () =>
                     WeakReferenceMessenger.Default.Send(new DataRefreshedMessage(units, rules)));

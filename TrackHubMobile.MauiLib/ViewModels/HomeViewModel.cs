@@ -49,6 +49,13 @@ public partial class HomeViewModel : BaseViewModel
     public HomeViewModel() : base("Dashboard")
     {
         WeakReferenceMessenger.Default.Register<DataRefreshedMessage>(this, HandleRefreshMessage);
+        // Queued the same way as the refresh handler so it lands after the empty refresh a reset sends.
+        WeakReferenceMessenger.Default.Register<SessionResetMessage>(this, (_, _) =>
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                IsLoaded = false;
+                OnUpdated?.Invoke();
+            }));
     }
 
     public Action? OnUpdated { get; set; }
