@@ -2,7 +2,42 @@
 
 @inherits ActiveScreenComponentBase
 
-<div id="map-container">
+<div class="map-page">
+    <div id="map"></div>
+
+    <div class="map-top">
+        <div class="map-search">
+            <i class="fas fa-search"></i>
+            <input type="search" class="form-control" placeholder="@LRM["SearchUnits"]..."
+                   value="@searchText" @oninput="OnSearchInputAsync" />
+        </div>
+        <div class="chip-row">
+            @foreach (var option in Enum.GetValues<UnitFilter>())
+            {
+                <button @key="option" class="chip @option.CssClass() @(filter == option ? "selected" : "")"
+                        @onclick="() => SetFilterAsync(option)">
+                    @if (option != UnitFilter.All)
+                    {
+                        <span class="status-dot"></span>
+                    }
+                    @TransporterHelper.GetFilterName(option)
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="map-fabs">
+        <button class="fab" @onclick="FitFleetAsync" title="@LRM["FitFleet"]" aria-label="@LRM["FitFleet"]">
+            <i class="fas fa-expand"></i>
+        </button>
+        @if (Selected is not null)
+        {
+            <button class="fab" @onclick="CenterOnSelectedAsync" title="@LRM["CenterUnit"]" aria-label="@LRM["CenterUnit"]">
+                <i class="fas fa-crosshairs"></i>
+            </button>
+        }
+    </div>
+
     @if (isLoading)
     {
         <div class="map-loading">
@@ -10,5 +45,29 @@
             <p>@LRM["Loading"]...</p>
         </div>
     }
-    <div id="map"></div>
+
+    @if (Selected is { } unit)
+    {
+        var status = ViewModel.StatusRules.DisplayStatusOf(unit, DateTimeOffset.UtcNow);
+        var location = TransporterHelper.GetLocation(unit);
+        <div class="unit-sheet">
+            <div class="sheet-head">
+                <div class="sheet-title">
+                    <span class="sheet-name">@unit.DeviceName</span>
+                    <span class="sheet-sub">
+                        @unit.Speed.ToString("N0") km/h · @TransporterHelper.GetTimeDifference(unit.DeviceDateTime)
+                    </span>
+                    @if (location.Length > 0)
+                    {
+                        <span class="sheet-sub">@location</span>
+                    }
+                </div>
+                <span class="status-pill @status.CssClass()">@TransporterHelper.GetStatusName(status)</span>
+                <button class="sheet-close" @onclick="DeselectAsync" title="@LRM["Close"]" aria-label="@LRM["Close"]">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <TransporterActions Transporter="unit" />
+        </div>
+    }
 </div>

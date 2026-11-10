@@ -54,6 +54,32 @@ public class UnitStatusRulesTests
         });
     }
 
+    [Test]
+    public void DisplayStatus_SplitsSpeedingFromMoving_AndOfflineWins()
+    {
+        var rules = UnitStatusRules.FromOnlineInterval(10);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(rules.DisplayStatusOf(Unit(1, 90), Now), Is.EqualTo(UnitDisplayStatus.Speeding));
+            Assert.That(rules.DisplayStatusOf(Unit(1, 40), Now), Is.EqualTo(UnitDisplayStatus.Moving));
+            Assert.That(rules.DisplayStatusOf(Unit(1, 0), Now), Is.EqualTo(UnitDisplayStatus.Stopped));
+            Assert.That(rules.DisplayStatusOf(Unit(11, 90), Now), Is.EqualTo(UnitDisplayStatus.Offline));
+        });
+    }
+
+    [Test]
+    public void TheMovingFilter_IncludesSpeedingUnits()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(UnitFilter.Moving.Matches(UnitDisplayStatus.Speeding), Is.True);
+            Assert.That(UnitFilter.Speeding.Matches(UnitDisplayStatus.Moving), Is.False);
+            Assert.That(UnitFilter.Stopped.Matches(UnitDisplayStatus.Offline), Is.False);
+            Assert.That(Enum.GetValues<UnitDisplayStatus>().All(status => UnitFilter.All.Matches(status)), Is.True);
+        });
+    }
+
     private static PositionVm Unit(int minutesAgo, double speed)
         => new(Guid.NewGuid(), "unit", "TRUCK", 0, 0, null, Now.AddMinutes(-minutesAgo), speed,
             null, null, null, null, null, null, null);

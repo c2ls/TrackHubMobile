@@ -37,6 +37,15 @@ public partial class HomeViewModel : BaseViewModel
     [ObservableProperty]
     private DateTimeOffset? lastGlobalUpdate;
 
+    [ObservableProperty]
+    private bool isLoaded;
+
+    private const int AttentionLimit = 4;
+
+    public IReadOnlyList<PositionVm> Attention { get; private set; } = [];
+
+    public UnitStatusRules StatusRules { get; private set; } = UnitStatusRules.Default;
+
     public HomeViewModel() : base("Dashboard")
     {
         WeakReferenceMessenger.Default.Register<DataRefreshedMessage>(this, HandleRefreshMessage);
@@ -68,6 +77,15 @@ public partial class HomeViewModel : BaseViewModel
             LastGlobalUpdate = transporters.Count > 0
                 ? transporters.Max(t => t.DeviceDateTime)
                 : null;
+
+            StatusRules = message.Rules;
+            Attention =
+            [
+                .. moving.Where(UnitStatusRules.IsSpeeding).OrderByDescending(t => t.Speed)
+                    .Concat(transporters.Where(t => !message.Rules.IsOnline(t, now)).OrderByDescending(t => t.DeviceDateTime))
+                    .Take(AttentionLimit)
+            ];
+            IsLoaded = true;
 
             OnUpdated?.Invoke();
         });

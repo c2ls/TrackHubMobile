@@ -41,7 +41,6 @@ public partial class PositionHistory : IDisposable
     [Parameter]
     public string TransporterIdParam { get; set; } = string.Empty;
 
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private IRouter Router { get; set; } = default!;
     [Inject] private IManager Manager { get; set; } = default!;
@@ -139,7 +138,6 @@ public partial class PositionHistory : IDisposable
                 // Controls move to the top edge so the trips sheet never covers them.
                 await JS.InvokeVoidAsync("trackHubMap.initMap",
                     Array.Empty<object>(),
-                    null,
                     new { zoomPosition = "topright", attributionPosition = "topleft" });
                 mapInitialized = true;
             }
@@ -160,10 +158,7 @@ public partial class PositionHistory : IDisposable
         }
     }
 
-    private void GoBack()
-    {
-        Navigation.NavigateTo($"/transporter/{TransporterIdParam}");
-    }
+    private async Task GoBackAsync() => await JS.InvokeVoidAsync("history.back");
 
     private async Task SetSourceAsync(bool stored)
     {

@@ -1,25 +1,49 @@
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
+.unit-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
-    margin-top: 0.75rem;
 }
 
-    .action-buttons .btn {
-        font-size: 0.78rem;
-        font-weight: 500;
-        padding: 0.35rem 0.65rem;
-        border-radius: var(--radius-sm, 8px);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        transition: all var(--transition-fast, 0.15s ease);
-    }
+.unit-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary, #1a1a2e);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
 
-    .action-buttons .btn:active {
-        transform: scale(0.96);
-    }
+.action-icon {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color, #e0e4e8);
+    border-radius: 14px;
+    background: var(--bg-card, #fff);
+    color: var(--color-primary, #0078d4);
+    font-size: 1.1rem;
+}
 
-    .action-buttons .btn i {
-        font-size: 0.85rem;
-    }
+.unit-action:first-child .action-icon {
+    border-color: var(--color-primary, #0078d4);
+    background: var(--color-primary, #0078d4);
+    color: #fff;
+}
+
+.unit-action:active .action-icon {
+    transform: scale(0.94);
+}
+
+.action-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
+// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License").
 //  You may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 //  limitations under the License.
 //
 
+using TrackHubMobile.Models;
+
 namespace TrackHubMobile.Interfaces.Helpers;
 
 public interface ITransporterHelper
@@ -20,4 +22,7 @@ public interface ITransporterHelper
     string GetTimeDifference(DateTimeOffset inputTime);
     string GetAccStatus(bool? accStatus);
     string GetTransporterTypeName(string? transporterType);
+    string GetStatusName(UnitDisplayStatus status);
+    string GetFilterName(UnitFilter filter);
+    string GetLocation(PositionVm unit);
 }

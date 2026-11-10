@@ -1,47 +1,79 @@
-// Copyright (c) 2025 Sergio Hernandez. All rights reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License").
-//  You may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
-//
-
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using TrackHubMobile.Interfaces.Services;
+using TrackHubMobile.Messages;
+using TrackHubMobile.Models;
+using TrackHubMobile.Utils;
 
 namespace TrackHubMobile.Pages;
 
-public partial class TransporterDetailPage
+public partial class TransporterDetailPage(
+    IDataRefresh refresh,
+    NavigationManager navigationManager) : ActiveScreenComponentBase(refresh, navigationManager), IDisposable
 {
     [Parameter]
     public string TransporterIdParam { get; set; } = string.Empty;
 
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
-    protected override async Task OnParametersSetAsync()
+    private bool mapInitialized;
+    private PositionVm? drawn;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        WeakReferenceMessenger.Default.Register<DataRefreshedMessage>(this, (_, _) => InvokeAsync(LoadAsync));
+    }
+
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
         if (Guid.TryParse(TransporterIdParam, out var transporterId))
         {
-            await ViewModel.OnTransporterSelected(transporterId);
+            await ViewModel.LoadAsync(transporterId);
+            StateHasChanged();
         }
     }
 
-    private void GoBack()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Navigation.NavigateTo("/listview");
-    }
+        await base.OnAfterRenderAsync(firstRender);
 
-    private async Task RefreshAsync()
-    {
-        if (Guid.TryParse(TransporterIdParam, out var transporterId))
+        try
         {
-            await ViewModel.OnTransporterSelected(transporterId);
+            if (firstRender)
+            {
+                await JS.InvokeVoidAsync("trackHubMap.initMap", Array.Empty<object>(), new { interactive = false });
+                mapInitialized = true;
+            }
+
+            if (mapInitialized && ViewModel.Transporter is { } unit && unit != drawn)
+            {
+                drawn = unit;
+                await JS.InvokeVoidAsync("trackHubMap.updateMarkers",
+                    new[] { MapMarker.From(unit, ViewModel.StatusRules) }, true);
+            }
         }
+        catch
+        {
+            // JS interop can fail if the page is navigated away quickly
+        }
+    }
+
+    private async Task GoBackAsync() => await JS.InvokeVoidAsync("history.back");
+
+    public new void Dispose()
+    {
+        WeakReferenceMessenger.Default.Unregister<DataRefreshedMessage>(this);
+        try
+        {
+            _ = JS.InvokeVoidAsync("trackHubMap.destroyMap");
+        }
+        catch
+        {
+            // Dispose should not throw
+        }
+        base.Dispose();
     }
 }

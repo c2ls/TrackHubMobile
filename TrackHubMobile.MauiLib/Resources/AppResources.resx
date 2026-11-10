@@ -204,9 +204,6 @@
   <data name="OpenInGoogleMaps" xml:space="preserve">
     <value>Google Maps</value>
   </data>
-  <data name="ShowOnMap" xml:space="preserve">
-    <value>Show on Map</value>
-  </data>
   <data name="ShareLocation" xml:space="preserve">
     <value>Share</value>
   </data>
@@ -414,15 +411,6 @@
   <data name="History" xml:space="preserve">
     <value>History</value>
   </data>
-  <data name="MinutesAgo" xml:space="preserve">
-    <value>{0} min ago</value>
-  </data>
-  <data name="HoursAgo" xml:space="preserve">
-    <value>{0} h ago</value>
-  </data>
-  <data name="DaysAgo" xml:space="preserve">
-    <value>{0} d ago</value>
-  </data>
   <data name="Refresh" xml:space="preserve">
     <value>Refresh</value>
   </data>
@@ -473,5 +461,26 @@
   </data>
   <data name="HidePassword" xml:space="preserve">
     <value>Hide password</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="NeedsAttention" xml:space="preserve">
+    <value>Needs attention</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="LiveMap" xml:space="preserve">
+    <value>Live map</value>
+  </data>
+  <data name="FitFleet" xml:space="preserve">
+    <value>Show all units</value>
+  </data>
+  <data name="CenterUnit" xml:space="preserve">
+    <value>Center on unit</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
   </data>
 </root>

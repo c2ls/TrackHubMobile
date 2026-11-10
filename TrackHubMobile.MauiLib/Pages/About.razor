@@ -1,6 +1,7 @@
 ﻿@page "/about"
 
 @inject AboutViewModel ViewModel
+@inject NavMenuViewModel Session
 
 <div class="about-page">
     <div class="about-header">
@@ -30,6 +31,10 @@
             <span class="about-value">Sergio Hernandez</span>
         </div>
     </div>
+
+    <button class="btn logout-button" @onclick="Session.HandleLogout">
+        <i class="fas fa-sign-out-alt"></i> @LRM["Logout"]
+    </button>
 
     <div class="about-footer">
         <p>&copy; @DateTimeOffset.Now.Year Sergio Hernandez. @LRM["AllRightsReserved"]</p>

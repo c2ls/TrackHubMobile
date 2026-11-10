@@ -25,12 +25,14 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
     [ObservableProperty]
     private bool isRefreshing;
     [ObservableProperty]
-    private PositionVm? selectedTransporter;
-    [ObservableProperty]
     private string searchText = string.Empty;
 
     // Materialized once per refresh or search, not per render; Virtualize needs a collection.
-    public List<PositionVm>? FilteredTransporters { get; private set; }
+    public List<UnitRow>? FilteredTransporters { get; private set; }
+
+    public UnitFilter Filter { get; private set; }
+
+    public IReadOnlyDictionary<UnitFilter, int> Counts { get; private set; } = new Dictionary<UnitFilter, int>();
 
     public UnitStatusRules StatusRules { get; private set; } = UnitStatusRules.Default;
 
@@ -61,26 +63,25 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
         ApplyFilter();
     }
 
-    public UnitStatus StatusOf(PositionVm unit) => StatusRules.StatusOf(unit, DateTimeOffset.UtcNow);
-
     private void ApplyFilter()
     {
-        FilteredTransporters = string.IsNullOrWhiteSpace(SearchText)
-            ? Transporters?.ToList()
-            : Transporters?.Where(t => t.DeviceName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
+        var now = DateTimeOffset.UtcNow;
+        var rows = Transporters?.Select(t => new UnitRow(t, StatusRules.DisplayStatusOf(t, now))).ToList();
+
+        Counts = Enum.GetValues<UnitFilter>().ToDictionary(f => f, f => rows?.Count(r => f.Matches(r.Status)) ?? 0);
+        FilteredTransporters = rows?
+            .Where(r => Filter.Matches(r.Status)
+                && (string.IsNullOrWhiteSpace(SearchText) || r.Unit.DeviceName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
+            .OrderBy(r => r.Status)
+            .ThenBy(r => r.Unit.DeviceName, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
         OnPropertyChanged(nameof(FilteredTransporters));
     }
 
-    public void OnRowClick(PositionVm transporter)
+    public void SetFilter(UnitFilter filter)
     {
-        if (SelectedTransporter?.TransporterId == transporter.TransporterId)
-        {
-            SelectedTransporter = null;
-        }
-        else
-        {
-            SelectedTransporter = transporter;
-        }
+        Filter = filter;
+        ApplyFilter();
     }
 
     public void OnSearchChanged(string value)
@@ -89,3 +90,5 @@ public partial class TransporterListViewModel(IDataRefresh dataRefresh) : BaseVi
         ApplyFilter();
     }
 }
+
+public readonly record struct UnitRow(PositionVm Unit, UnitDisplayStatus Status);

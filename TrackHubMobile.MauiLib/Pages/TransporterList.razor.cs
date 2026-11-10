@@ -24,10 +24,24 @@ public partial class TransporterList(
     IDataRefresh refresh,
     NavigationManager navigationManager) : ActiveScreenComponentBase(refresh, navigationManager), IDisposable
 {
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusParam { get; set; }
+
+    private (bool Applied, string? Status) routeFilter;
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
         WeakReferenceMessenger.Default.Register<DataRefreshedMessage>(this, HandleRefreshMessage);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (routeFilter != (true, StatusParam))
+        {
+            routeFilter = (true, StatusParam);
+            ViewModel.SetFilter(Enum.TryParse<UnitFilter>(StatusParam, ignoreCase: true, out var filter) ? filter : UnitFilter.All);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -54,12 +68,7 @@ public partial class TransporterList(
         ViewModel.OnSearchChanged(e.Value?.ToString() ?? string.Empty);
     }
 
-    private string GetStatusClass(PositionVm unit) => ViewModel.StatusOf(unit) switch
-    {
-        UnitStatus.Offline => "status-offline",
-        UnitStatus.Moving => "status-moving",
-        _ => "status-stopped"
-    };
+    private void OpenUnit(Guid transporterId) => Navigation.NavigateTo($"/transporter/{transporterId}");
 
     public new void Dispose()
     {

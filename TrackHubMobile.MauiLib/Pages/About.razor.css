@@ -74,6 +74,15 @@
     color: var(--text-secondary, #6c757d);
 }
 
+.logout-button {
+    width: 100%;
+    min-height: 3rem;
+    border: 1px solid var(--border-color, #e0e4e8);
+    background: var(--bg-card, #fff);
+    color: var(--color-danger, #dc3545);
+    font-weight: 600;
+}
+
 .about-footer {
     text-align: center;
     padding: 1.5rem 0 0.5rem;

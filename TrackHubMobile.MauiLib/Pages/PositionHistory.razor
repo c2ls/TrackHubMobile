@@ -2,7 +2,7 @@
 
 <div class="history-page">
     <div class="history-topbar">
-        <button class="btn btn-sm icon-btn" @onclick="GoBack" title="@LRM["Back"]">
+        <button class="btn btn-sm icon-btn" @onclick="GoBackAsync" title="@LRM["Back"]">
             <i class="fas fa-arrow-left"></i>
         </button>
         <div class="topbar-title">
@@ -18,7 +18,7 @@
     @if (showFilters)
     {
         <div class="filter-panel">
-            <div class="preset-row">
+            <div class="chip-row">
                 <button class="chip @(selectedPreset == RangePreset.Last24Hours ? "selected" : "")"
                         @onclick="() => ApplyPresetAsync(RangePreset.Last24Hours)">@LRM["Last24Hours"]</button>
                 <button class="chip @(selectedPreset == RangePreset.Today ? "selected" : "")"

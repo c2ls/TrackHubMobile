@@ -1,83 +1,35 @@
-.navbar-toggler {
-	background-color: rgba(255, 255, 255, 0.1);
+.tabbar {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	padding-bottom: env(safe-area-inset-bottom);
+	background: var(--bg-card, #fff);
+	border-top: 1px solid var(--border-color, #e0e4e8);
 }
 
-.top-row {
-	height: 3.5rem;
-	background-color: rgba(0,0,0,0.4);
-}
-
-.navbar-brand {
+.tab {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	font-size: 1.1rem;
+	justify-content: center;
+	gap: 0.2rem;
+	min-height: 3.5rem;
+	min-width: 0;
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: var(--text-secondary, #6c757d);
 }
 
-/* The mark's spokes are hairlines below ~2rem; 2.25rem keeps them legible and still
-   leaves breathing room inside the 3.5rem bar (the portal sidenav renders it at 3rem). */
-.brand-logo {
-	width: 2.25rem;
-	height: 2.25rem;
-	margin-right: 0.5rem;
-}
-
-.oi {
-	width: 2rem;
-	font-size: 1.1rem;
-	vertical-align: text-top;
-	top: -2px;
-}
-
-.nav-item {
-	font-size: 0.9rem;
-	padding-bottom: 0.5rem;
-}
-
-	.nav-item:first-of-type {
-		padding-top: 1rem;
+	.tab i {
+		font-size: 1.15rem;
 	}
 
-	.nav-item:last-of-type {
-		padding-bottom: 1rem;
+	.tab span {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
-	/* The rows are flex containers, so the whitespace between icon and label in the
-	   markup collapses — the gap has to come from the icon itself. A fixed width also
-	   keeps the labels aligned across rows whose icons differ in width. */
-	.nav-item ::deep .nav-icon {
-		display: inline-block;
-		width: 1.25rem;
-		margin-right: 0.75rem;
-		text-align: center;
-		flex-shrink: 0;
+	.tab.active {
+		color: var(--color-primary, #0078d4);
 	}
-
-	.nav-item ::deep a {
-		color: #d7d7d7;
-		border-radius: 4px;
-		height: 3rem;
-		display: flex;
-		align-items: center;
-		line-height: 3rem;
-	}
-
-.nav-item ::deep a.active {
-	background-color: rgba(255,255,255,0.25);
-	color: white;
-}
-
-.nav-item ::deep a:hover {
-	background-color: rgba(255,255,255,0.1);
-	color: white;
-}
-
-@media (min-width: 641px) {
-	.navbar-toggler {
-		display: none;
-	}
-
-	.collapse {
-		/* Never collapse the sidebar for wide screens */
-		display: block !important;
-	}
-}

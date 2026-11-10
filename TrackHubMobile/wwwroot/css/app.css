@@ -10,6 +10,12 @@
     --color-info: #17a2b8;
     --color-muted: #6c757d;
 
+    --status-moving: #1f9d55;
+    --status-stopped: #d98a00;
+    --status-offline: #7b8594;
+    --status-speeding: #d6364a;
+    --pill-fg: #ffffff;
+
     --bg-page: #f0f2f5;
     --bg-card: #ffffff;
     --bg-sidebar: linear-gradient(180deg, #0a1628 0%, #1a2744 100%);
@@ -35,6 +41,11 @@
         --border-color-light: #21262d;
         --text-primary: #e6edf3;
         --text-secondary: #8b949e;
+        --status-moving: #3ecf7e;
+        --status-stopped: #f0b03a;
+        --status-offline: #8e99a8;
+        --status-speeding: #f2637a;
+        --pill-fg: #0d1117;
         --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
         --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
         --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
@@ -119,7 +130,7 @@ a:hover, .btn-link:hover {
 
 /* ── Content ────────────────────────────────────────── */
 .content {
-    padding-top: 0.5rem;
+    padding: 0;
     background: var(--bg-page);
     overflow-y: auto;
 }
@@ -131,6 +142,115 @@ a:hover, .btn-link:hover {
     color: var(--text-primary);
     margin: 0 0 1rem;
     letter-spacing: -0.01em;
+}
+
+.page-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+    .page-head .page-title {
+        margin: 0;
+    }
+
+.page-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Unit status ────────────────────────────────────── */
+.st-moving { --st: var(--status-moving); }
+.st-stopped { --st: var(--status-stopped); }
+.st-offline { --st: var(--status-offline); }
+.st-speeding { --st: var(--status-speeding); }
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--st, var(--color-muted));
+}
+
+.status-pill {
+    flex-shrink: 0;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--pill-fg);
+    background: var(--st, var(--color-muted));
+}
+
+/* ── Chips ──────────────────────────────────────────── */
+.chip-row {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.chip-row::-webkit-scrollbar {
+    display: none;
+}
+
+.chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.5rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.chip.selected {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+/* ── Floating map controls ──────────────────────────── */
+.fab {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+}
+
+/* ── Skeleton ───────────────────────────────────────── */
+.skeleton {
+    border-radius: var(--radius-md);
+    background: var(--border-color);
+    animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes skeleton-pulse {
+    from { opacity: 0.45; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
 }
 
 /* ── Form ───────────────────────────────────────────── */
@@ -175,6 +295,10 @@ a:hover, .btn-link:hover {
 .loading-state i {
     font-size: 1.5rem;
     color: var(--color-primary);
+}
+
+.empty-state i {
+    font-size: 1.75rem;
 }
 
 /* ── Error UI ───────────────────────────────────────── */
