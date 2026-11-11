@@ -387,6 +387,9 @@
   <data name="StoppedTrip" xml:space="preserve">
     <value>Detenido</value>
   </data>
+  <data name="NoDataTrip" xml:space="preserve">
+    <value>Sin datos</value>
+  </data>
   <data name="NoTripsFound" xml:space="preserve">
     <value>No se encontraron recorridos en el rango seleccionado.</value>
   </data>

@@ -100,7 +100,7 @@
                         }
                         else
                         {
-                            <text>@trips.Count @LRM["Trips"]</text>
+                            <text>@MovingTripCount @LRM["Trips"]</text>
                         }
                     </span>
                     <i class="fas @(sheetExpanded ? "fa-chevron-down" : "fa-chevron-up")"></i>
@@ -117,13 +117,14 @@
                         {
                             var current = trip;
                             var isMoving = IsMoving(current);
-                            <div class="trip-card @(current.TripId == selectedTripId ? "selected" : "") @(isMoving ? "moving" : "stopped")"
+                            var isNoData = IsNoData(current);
+                            <div class="trip-card @(current.TripId == selectedTripId ? "selected" : "") @(isMoving ? "moving" : isNoData ? "nodata" : "stopped")"
                                  @onclick="() => SelectTripAsync(current)">
                                 <div class="trip-icon">
-                                    <i class="fas @(isMoving ? "fa-route" : "fa-parking")"></i>
+                                    <i class="fas @(isMoving ? "fa-route" : isNoData ? "fa-question" : "fa-parking")"></i>
                                 </div>
                                 <div class="trip-body">
-                                    <div class="trip-title">@(isMoving ? LRM["MovingTrip"] : LRM["StoppedTrip"])</div>
+                                    <div class="trip-title">@(isMoving ? LRM["MovingTrip"] : isNoData ? LRM["NoDataTrip"] : LRM["StoppedTrip"])</div>
                                     <div class="trip-times">
                                         @current.From.LocalDateTime.ToString("g") - @current.To.LocalDateTime.ToString("g")
                                     </div>

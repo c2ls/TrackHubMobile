@@ -261,6 +261,10 @@
     background: var(--status-stopped);
 }
 
+.trip-card.nodata .trip-icon {
+    background: #9ca3af;
+}
+
 .trip-body {
     display: flex;
     flex-direction: column;
