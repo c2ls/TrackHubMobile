@@ -387,6 +387,9 @@
   <data name="StoppedTrip" xml:space="preserve">
     <value>Stopped</value>
   </data>
+  <data name="NoDataTrip" xml:space="preserve">
+    <value>No data</value>
+  </data>
   <data name="NoTripsFound" xml:space="preserve">
     <value>No trips found for the selected range.</value>
   </data>

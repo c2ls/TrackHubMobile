@@ -186,8 +186,12 @@ public partial class PositionHistory : IDisposable
         await InvokeMapAsync("trackHubMap.refit", new { bottomInsetRatio = BottomInsetRatio });
     }
 
-    // Trip type 1 marks a stop segment; everything else is a moving trip
-    private static bool IsMoving(TripVm trip) => trip.Type != 1;
+    // Router TripTypeEnum: 1 stop, 2 moving, 3 no data (a hole in the device's reports)
+    private static bool IsMoving(TripVm trip) => trip.Type == 2;
+
+    private static bool IsNoData(TripVm trip) => trip.Type == 3;
+
+    private int MovingTripCount => trips.Count(IsMoving);
 
     private async Task ApplyPresetAsync(RangePreset preset)
     {
@@ -340,7 +344,8 @@ public partial class PositionHistory : IDisposable
         _ => "HistoryError",
     };
 
-    // Draws the whole range: every moving trip as its own polyline plus a dot per stop.
+    // Draws the whole range: every moving trip as its own polyline, a dot per stop, and a
+    // dashed line wherever there is no driven track (a stop that drifted, a reporting gap).
     private async Task DrawAllAsync()
     {
         selectedTripId = null;
@@ -356,17 +361,22 @@ public partial class PositionHistory : IDisposable
             .ToArray();
 
         var stops = trips
-            .Where(t => !IsMoving(t) && t.Points is { Count: > 0 })
+            .Where(t => !IsMoving(t) && !IsNoData(t) && t.Points is { Count: > 0 })
             .Select(t => ToMapPoint(t.Points![0]))
             .ToArray();
 
-        if (segments.Length == 0 && stops.Length == 0)
+        var dashed = trips
+            .Where(t => !IsMoving(t) && t.Points is { Count: > 1 })
+            .Select(t => t.Points!.Select(ToMapPoint).ToArray())
+            .ToArray();
+
+        if (segments.Length == 0 && stops.Length == 0 && dashed.Length == 0)
         {
             await ClearTrackAsync();
             return;
         }
 
-        await InvokeMapAsync("trackHubMap.drawTracks", segments, stops, new { bottomInsetRatio = BottomInsetRatio });
+        await InvokeMapAsync("trackHubMap.drawTracks", segments, stops, dashed, new { bottomInsetRatio = BottomInsetRatio });
     }
 
     private async Task SelectTripAsync(TripVm trip)
@@ -382,11 +392,12 @@ public partial class PositionHistory : IDisposable
             return;
         }
 
-        // A stop segment renders as a single location marker; a moving trip as the full track
-        var tripPoints = IsMoving(trip) ? trip.Points : trip.Points.Take(1);
+        // A stop segment renders as a single location marker; anything else as its track
+        var isStop = !IsMoving(trip) && !IsNoData(trip);
+        var tripPoints = isStop ? trip.Points.Take(1) : trip.Points;
         var points = tripPoints.Select(ToMapPoint).ToArray();
 
-        await InvokeMapAsync("trackHubMap.drawTrack", points, new { bottomInsetRatio = CollapsedInsetRatio });
+        await InvokeMapAsync("trackHubMap.drawTrack", points, new { bottomInsetRatio = CollapsedInsetRatio, dashed = IsNoData(trip) });
     }
 
     private double BottomInsetRatio => sheetExpanded ? ExpandedInsetRatio : CollapsedInsetRatio;

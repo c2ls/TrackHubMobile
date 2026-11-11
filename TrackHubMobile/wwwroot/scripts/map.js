@@ -200,7 +200,7 @@ window.trackHubMap = {
 
     // Draws a track polyline with start/end markers and fits the map to it.
     // A single point renders as one stop marker.
-    // points: [{ lat, lng, speed, dateTime }], options: { color, weight, bottomInsetRatio }
+    // points: [{ lat, lng, speed, dateTime }], options: { color, weight, dashed, bottomInsetRatio }
     drawTrack: function (points, options) {
         if (!this.map) return;
 
@@ -224,15 +224,17 @@ window.trackHubMap = {
         this._fitTrack(polyline.getBounds(), options);
     },
 
-    // Draws a whole range at once: one polyline per moving segment plus a dot per stop,
-    // fitted to everything. segments: [[{ lat, lng, speed, dateTime }, ...], ...]
-    drawTracks: function (segments, stops, options) {
+    // Draws a whole range at once: one polyline per moving segment, a dot per stop and a
+    // dashed line per stretch without a driven track, fitted to everything.
+    // segments, dashed: [[{ lat, lng, speed, dateTime }, ...], ...]
+    drawTracks: function (segments, stops, dashed, options) {
         if (!this.map) return;
 
         this.clearTrack();
         segments = segments || [];
         stops = stops || [];
-        if (segments.length === 0 && stops.length === 0) return;
+        dashed = dashed || [];
+        if (segments.length === 0 && stops.length === 0 && dashed.length === 0) return;
 
         options = options || {};
         this.trackLayer = L.layerGroup().addTo(this.map);
@@ -255,6 +257,12 @@ window.trackHubMap = {
 
             if (!firstPoint) firstPoint = seg[0];
             lastPoint = seg[seg.length - 1];
+        }
+
+        for (var k = 0; k < dashed.length; k++) {
+            var gap = this._segmentPolyline(dashed[k], { color: '#7f7f7f', weight: 3, dashed: true });
+            this.trackLayer.addLayer(gap);
+            bounds.extend(gap.getBounds());
         }
 
         for (var j = 0; j < stops.length; j++) {
@@ -315,8 +323,9 @@ window.trackHubMap = {
             latlngs.push([points[i].lat, points[i].lng]);
         }
         return L.polyline(latlngs, {
-            color: options.color || '#0078d4',
+            color: options.color || (options.dashed ? '#7f7f7f' : '#0078d4'),
             weight: options.weight || 4,
+            dashArray: options.dashed ? '4 8' : null,
             opacity: 0.85,
             lineJoin: 'round',
             lineCap: 'round'
