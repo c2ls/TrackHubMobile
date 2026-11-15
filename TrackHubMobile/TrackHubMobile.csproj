@@ -16,7 +16,7 @@
         <WindowsPackageType>None</WindowsPackageType>
 
         <!-- Display name -->
-        <ApplicationTitle>TrackHubMobile</ApplicationTitle>
+        <ApplicationTitle>TrackHub Mobile</ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.trackhubmobile</ApplicationId>

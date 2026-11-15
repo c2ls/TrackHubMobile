@@ -30,14 +30,13 @@ public partial class App : Application
         _services = services;
 
         toastDisplay.Initialize();
-        UserAppTheme = PlatformAppTheme;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
         var window = new Window(_services.GetRequiredService<MainPage>())
         {
-            Title = "TrackHubMobile"
+            Title = "TrackHub Mobile"
         };
         return window;
     }

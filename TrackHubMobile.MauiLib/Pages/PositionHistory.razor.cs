@@ -193,14 +193,18 @@ public partial class PositionHistory : IDisposable
 
     private int MovingTripCount => trips.Count(IsMoving);
 
+    private int StopCount => trips.Count(t => !IsMoving(t) && !IsNoData(t));
+
     private async Task ApplyPresetAsync(RangePreset preset)
     {
         selectedPreset = preset;
         showRangeError = false;
 
-        // Picking a day waits for the date input; the fixed options search on the tap.
+        // Picking a day waits for the date input rather than spending a search; the other
+        // range's trips go meanwhile so the screen never shows them under this option.
         if (preset == RangePreset.Day && !TryParseDay(out _))
         {
+            await ResetResultsAsync();
             return;
         }
 
@@ -255,16 +259,33 @@ public partial class PositionHistory : IDisposable
     private DateTimeOffset ToAccountOffset(DateTime value)
         => new(DateTime.SpecifyKind(value, DateTimeKind.Unspecified), accountZone.GetUtcOffset(value));
 
+    // One search at a time: a newer choice supersedes the one in flight, so a tap on another
+    // day never spends the Router's per-minute budget on a result nobody will see.
+    private async Task ResetResultsAsync()
+    {
+        searchCancellation?.Cancel();
+        searchCancellation?.Dispose();
+        searchCancellation = null;
+
+        isLoading = false;
+        hasSearched = false;
+        featureDisabled = false;
+        errorKey = null;
+        selectedTripId = null;
+        trips = [];
+        await ClearTrackAsync();
+    }
+
     private async Task SearchAsync()
     {
         showRangeError = false;
-        featureDisabled = false;
-        errorKey = null;
 
         if (transporterId == Guid.Empty)
         {
             return;
         }
+
+        await ResetResultsAsync();
 
         if (!TryBuildRange(out var from, out var to))
         {
@@ -273,18 +294,10 @@ public partial class PositionHistory : IDisposable
             return;
         }
 
-        // One search at a time: a newer choice supersedes the one in flight, so a tap on another
-        // day never spends the Router's per-minute budget on a result nobody will see.
-        searchCancellation?.Cancel();
-        searchCancellation?.Dispose();
         searchCancellation = new CancellationTokenSource();
         var cancellation = searchCancellation.Token;
 
         isLoading = true;
-        hasSearched = false;
-        selectedTripId = null;
-        trips = [];
-        await ClearTrackAsync();
         StateHasChanged();
 
         try

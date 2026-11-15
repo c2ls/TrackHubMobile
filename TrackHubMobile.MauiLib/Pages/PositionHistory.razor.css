@@ -104,10 +104,6 @@
     gap: 0.35rem;
 }
 
-    .source-switch .btn {
-        min-height: 2.5rem;
-    }
-
 .history-banner {
     margin: 0.6rem 0 0;
     padding: 0.6rem 0.75rem;
@@ -209,7 +205,9 @@
     font-weight: 700;
 }
 
+/* contain: without it the Android WebView rasterises the handle above a scrolling list at the wrong scale */
 .sheet-body {
+    contain: paint;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 0 0.6rem 0.75rem;

@@ -35,10 +35,9 @@ window.trackHubMap = {
             keyboard: interactive
         }).setView([14.6349, -90.5069], 10);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://osm.org/">OSM</a>',
-            maxZoom: 20,
-            subdomains: 'abcd'
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19
         }).addTo(this.map);
 
         L.control.attribution({ position: options.attributionPosition || 'bottomleft', prefix: false }).addTo(this.map);

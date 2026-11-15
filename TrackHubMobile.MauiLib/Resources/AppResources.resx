@@ -486,4 +486,7 @@
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="Stops" xml:space="preserve">
+    <value>Stops</value>
+  </data>
 </root>

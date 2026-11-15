@@ -68,6 +68,10 @@ public partial class TransporterList(
         ViewModel.OnSearchChanged(e.Value?.ToString() ?? string.Empty);
     }
 
+    // The filter lives in the address so coming back from a unit restores the one last chosen.
+    private void SelectFilter(UnitFilter filter)
+        => Navigation.NavigateTo(filter == UnitFilter.All ? "/listview" : $"/listview?status={filter}", replace: true);
+
     private void OpenUnit(Guid transporterId) => Navigation.NavigateTo($"/transporter/{transporterId}");
 
     public new void Dispose()

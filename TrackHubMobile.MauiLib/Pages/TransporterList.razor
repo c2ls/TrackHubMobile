@@ -25,7 +25,7 @@
             @foreach (var filter in Enum.GetValues<UnitFilter>())
             {
                 <button @key="filter" class="chip @filter.CssClass() @(ViewModel.Filter == filter ? "selected" : "")"
-                        @onclick="() => ViewModel.SetFilter(filter)">
+                        @onclick="() => SelectFilter(filter)">
                     @if (filter != UnitFilter.All)
                     {
                         <span class="status-dot"></span>
