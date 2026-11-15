@@ -46,11 +46,11 @@
                 <div class="filter-row">
                     <span class="detail-label">@LRM["HistorySource"]</span>
                     <div class="source-switch">
-                        <button class="btn btn-sm @(useStoredSource ? "btn-primary" : "btn-outline-primary")"
+                        <button class="chip @(useStoredSource ? "selected" : "")"
                                 @onclick="() => SetSourceAsync(true)">
                             @LRM["SourceTrackHub"]
                         </button>
-                        <button class="btn btn-sm @(!useStoredSource ? "btn-primary" : "btn-outline-primary")"
+                        <button class="chip @(!useStoredSource ? "selected" : "")"
                                 @onclick="() => SetSourceAsync(false)">
                             @LRM["SourceProvider"]
                         </button>
@@ -100,7 +100,7 @@
                         }
                         else
                         {
-                            <text>@MovingTripCount @LRM["Trips"]</text>
+                            <text>@LRM["Trips"]: @MovingTripCount · @LRM["Stops"]: @StopCount</text>
                         }
                     </span>
                     <i class="fas @(sheetExpanded ? "fa-chevron-down" : "fa-chevron-up")"></i>

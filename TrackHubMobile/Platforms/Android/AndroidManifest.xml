@@ -6,7 +6,7 @@
 	     to gain by shipping it off the handset. -->
 	<!-- Every endpoint is HTTPS; below API 28 the platform would otherwise allow a plaintext
 	     fallback, which on a captive-portal network is exactly where tokens would leak. -->
-	<application android:usesCleartextTraffic="false" android:allowBackup="false" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="TrackHubMobile">
+	<application android:usesCleartextTraffic="false" android:allowBackup="false" android:icon="@mipmap/appicon" android:supportsRtl="true" android:label="TrackHub Mobile">
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<queries>

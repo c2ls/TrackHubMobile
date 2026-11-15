@@ -9,7 +9,7 @@
         <p class="login-subtitle">@LRM["SignInSubtitle"]</p>
     </div>
 
-    <EditForm Model="ViewModel" OnSubmit="SignInAsync" class="login-card" novalidate>
+    <form class="login-card" novalidate @onsubmit="SignInAsync">
         <div class="login-field">
             <label for="email">@LRM["Email"]</label>
             <input id="email" class="form-control" type="email" inputmode="email" autocomplete="username"
@@ -50,5 +50,5 @@
                 <span>@LRM["SignIn"]</span>
             }
         </button>
-    </EditForm>
+    </form>
 </div>
